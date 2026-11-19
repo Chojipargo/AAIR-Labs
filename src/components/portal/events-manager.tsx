@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { deleteEvent, saveEvent } from "@/lib/actions/events";
+import { localInputToIso } from "@/lib/dates";
 import type { EventInput, EventItem } from "@/lib/types";
 
 const EMPTY_FORM: EventInput = {
@@ -67,9 +68,18 @@ export function EventsManager({ events }: { events: EventItem[] }) {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    // `datetime-local` only carries local wall-clock time. Convert it here in
+    // the browser so the server stores the director's intended instant.
+    const isoDate = localInputToIso(form.event_date);
+    if (!isoDate) {
+      setError("Please choose a valid date and time.");
+      return;
+    }
+
     setPendingId(form.id ?? "new");
     startTransition(async () => {
-      const result = await saveEvent(form);
+      const result = await saveEvent({ ...form, event_date: isoDate });
       if (!result.ok) {
         setError(result.error);
       } else {
