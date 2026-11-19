@@ -25,20 +25,45 @@ export async function saveEvent(input: EventInput) {
     return { ok: false as const, error: "A date and time is required." };
   }
 
+  // `datetime-local` values have no timezone, so parsing them here would use
+  // the server's zone (UTC on Vercel) instead of the director's. The client
+  // sends an absolute timestamp; reject anything without an explicit offset so
+  // this cannot silently regress.
+  const parsedDate = new Date(eventDate);
+  if (
+    !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(eventDate) ||
+    Number.isNaN(parsedDate.getTime())
+  ) {
+    return { ok: false as const, error: "A valid date and time is required." };
+  }
+
   const payload = {
     title,
     description: input.description?.trim() ?? "",
-    event_date: new Date(eventDate).toISOString(),
+    event_date: parsedDate.toISOString(),
     location: input.location?.trim() ?? "",
     registration_link: input.registration_link?.trim() ?? "",
   };
 
   const supabase = await createClient();
-  const { error } = input.id
-    ? await supabase.from("events").update(payload).eq("id", input.id)
-    : await supabase.from("events").insert({ ...payload, created_by: user.id });
+  const { data, error } = input.id
+    ? await supabase
+        .from("events")
+        .update(payload)
+        .eq("id", input.id)
+        .select("id")
+    : await supabase
+        .from("events")
+        .insert({ ...payload, created_by: user.id })
+        .select("id");
 
   if (error) return { ok: false as const, error: error.message };
+  if (!data?.length) {
+    return {
+      ok: false as const,
+      error: "That event could not be saved. It may have been deleted.",
+    };
+  }
 
   revalidateEvents();
   return { ok: true as const };
