@@ -41,14 +41,26 @@ export function ExternalReadingList({
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink-70">
                 {reading.context}
               </p>
-              <a
-                href={reading.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-auto inline-flex w-fit border-b-[1.5px] border-ink pb-0.5 text-[13px] font-semibold text-ink transition-colors hover:border-green hover:text-green"
-              >
-                Read at source
-              </a>
+              <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2">
+                <a
+                  href={reading.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit border-b-[1.5px] border-ink pb-0.5 text-[13px] font-semibold text-ink transition-colors hover:border-green hover:text-green"
+                >
+                  Read at source
+                </a>
+                {reading.fallback_url && (
+                  <a
+                    href={reading.fallback_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-fit border-b-[1.5px] border-line pb-0.5 text-[13px] font-semibold text-ink-70 transition-colors hover:border-green hover:text-green"
+                  >
+                    Archived copy
+                  </a>
+                )}
+              </div>
             </li>
           ))}
         </ul>

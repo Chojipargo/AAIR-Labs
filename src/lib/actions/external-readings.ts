@@ -37,6 +37,8 @@ export async function saveExternalReading(input: ExternalReadingInput) {
   const venue = input.venue?.trim() ?? "";
   const context = input.context?.trim() ?? "";
   const sourceUrl = normalizeHttpUrl(input.source_url ?? "");
+  const rawFallbackUrl = input.fallback_url?.trim() ?? "";
+  const fallbackUrl = rawFallbackUrl ? normalizeHttpUrl(rawFallbackUrl) : null;
   const yearResult = parseYear(input.published_year ?? "");
 
   if (!title || title.length > 300) {
@@ -50,6 +52,12 @@ export async function saveExternalReading(input: ExternalReadingInput) {
   }
   if (!sourceUrl) {
     return { ok: false as const, error: "Source URL needs a valid http or https link." };
+  }
+  if (rawFallbackUrl && !fallbackUrl) {
+    return {
+      ok: false as const,
+      error: "Fallback URL needs a valid http or https link, or leave it blank.",
+    };
   }
   if (!context || context.length > 4000) {
     return {
@@ -65,17 +73,29 @@ export async function saveExternalReading(input: ExternalReadingInput) {
     venue,
     published_year: yearResult.year,
     source_url: sourceUrl,
+    fallback_url: fallbackUrl,
     context,
   };
 
   const supabase = await createClient();
-  const { error } = input.id
-    ? await supabase.from("external_readings").update(payload).eq("id", input.id)
+  const { data, error } = input.id
+    ? await supabase
+        .from("external_readings")
+        .update(payload)
+        .eq("id", input.id)
+        .select("id")
     : await supabase
         .from("external_readings")
-        .insert({ ...payload, created_by: user.id });
+        .insert({ ...payload, created_by: user.id })
+        .select("id");
 
   if (error) return { ok: false as const, error: error.message };
+  if (!data?.length) {
+    return {
+      ok: false as const,
+      error: "That reading could not be saved. It may have been deleted.",
+    };
+  }
 
   revalidateReadings();
   return { ok: true as const };

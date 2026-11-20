@@ -208,6 +208,7 @@ export interface ExternalReading {
   venue: string;
   published_year: number | null;
   source_url: string;
+  fallback_url: string | null;
   context: string;
   created_by: string | null;
   created_at: string;
@@ -221,6 +222,7 @@ export interface ExternalReadingInput {
   venue: string;
   published_year: string;
   source_url: string;
+  fallback_url: string;
   context: string;
 }
 
