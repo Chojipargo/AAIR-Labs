@@ -19,6 +19,7 @@ const EMPTY_FORM: ExternalReadingInput = {
   venue: "",
   published_year: "",
   source_url: "",
+  fallback_url: "",
   context: "",
 };
 
@@ -50,6 +51,7 @@ export function ExternalReadingManager({
       venue: reading.venue ?? "",
       published_year: reading.published_year ? String(reading.published_year) : "",
       source_url: reading.source_url,
+      fallback_url: reading.fallback_url ?? "",
       context: reading.context,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -163,6 +165,21 @@ export function ExternalReadingManager({
               placeholder="https://"
               required
             />
+          </div>
+
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="reading-fallback">Fallback URL (optional)</Label>
+            <Input
+              id="reading-fallback"
+              inputMode="url"
+              value={form.fallback_url}
+              onChange={(e) => update("fallback_url", e.target.value)}
+              placeholder="https://"
+            />
+            <p className="text-xs text-ink-45">
+              A backup link, usually a web archive snapshot, shown when the
+              source stops responding.
+            </p>
           </div>
 
           <div className="space-y-1.5 sm:col-span-2">
